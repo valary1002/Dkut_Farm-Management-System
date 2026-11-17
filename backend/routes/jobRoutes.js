@@ -1,0 +1,10 @@
+const express = require('express')
+const controller = require('../controllers/jobController')
+const { authenticate, authorize } = require('../middleware/authMiddleware')
+const router = express.Router()
+router.get('/', authenticate, controller.list)
+router.get('/all', authenticate, authorize('ADMIN'), controller.listAll)
+router.post('/', authenticate, authorize('ADMIN'), controller.create)
+router.patch('/:id', authenticate, authorize('ADMIN'), controller.update)
+router.delete('/:id', authenticate, authorize('ADMIN'), controller.remove)
+module.exports = router

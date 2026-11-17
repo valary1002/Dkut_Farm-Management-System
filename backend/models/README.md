@@ -1,0 +1,1 @@
+The current implementation uses the official MongoDB Node.js driver with a shared database connection. Produce documents embed inventory, and order documents embed their line items so the API can preserve price snapshots and stock updates without relational joins.

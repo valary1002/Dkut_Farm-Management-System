@@ -1,0 +1,11 @@
+const express = require('express')
+const controller = require('../controllers/paymentController')
+const { authenticate, authorize } = require('../middleware/authMiddleware')
+const router = express.Router()
+router.post('/mpesa/callback', controller.callback)
+router.post('/orders/:orderId', authenticate, authorize('CUSTOMER', 'ADMIN'), controller.create)
+router.post('/orders/:orderId/confirm', authenticate, authorize('CUSTOMER'), controller.confirm)
+router.get('/orders/:orderId', authenticate, authorize('CUSTOMER', 'ADMIN'), controller.listForOrder)
+router.get('/', authenticate, authorize('ADMIN'), controller.all)
+router.patch('/:id/status', authenticate, authorize('ADMIN'), controller.updateStatus)
+module.exports = router

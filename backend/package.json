@@ -1,0 +1,28 @@
+{
+  "name": "dkut-farm-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST API for the DKUT Farm Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/route-contract.test.js",
+    "test:customer-workflow": "node tests/customer-workflow.integration.js",
+    "test:admin-workflow": "node tests/admin-workflow.integration.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-validator": "^7.2.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.7.0",
+    "mongoose": "^9.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
