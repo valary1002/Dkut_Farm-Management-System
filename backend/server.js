@@ -19,6 +19,7 @@ const { validateEnvironment } = require('./config/environment')
 
 const app = express()
 const allowedOrigins = [
+  "https://dkutfarmmanagement.vercel.app",
   "https://dkutfarmmanagement-git-main-vcc21.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
