@@ -1,8 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { Link, useHistory, useLocation } from 'react-router-dom'
+import React, { useContext, useState } from 'react'
+import { Link, useHistory } from 'react-router-dom'
 import { SidebarContext } from '../context/SidebarContext'
 import {
-  SearchIcon,
   MoonIcon,
   SunIcon,
   MenuIcon,
@@ -10,35 +9,16 @@ import {
   OutlineCogIcon,
   OutlineLogoutIcon,
 } from '../icons'
-import { Avatar, Input, Dropdown, DropdownItem, WindmillContext } from '@windmill/react-ui'
+import { Avatar, Dropdown, DropdownItem, WindmillContext } from '@windmill/react-ui'
 import { useAuth } from '../context/AuthContext'
 import schoolLogo from '../assets/img/school-logo.jpg'
 
-function Header({ showSearch = true }) {
+function Header() {
   const { mode, toggleMode } = useContext(WindmillContext)
   const { toggleSidebar } = useContext(SidebarContext)
   const { logout } = useAuth()
   const history = useHistory()
-  const location = useLocation()
-
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    setSearchQuery(params.get('q') || '')
-  }, [location.search])
-
-  function handleSearch(event) {
-    const value = event.target.value
-    setSearchQuery(value)
-    if (location.pathname === '/app/dashboard') {
-      history.replace({
-        pathname: '/app/dashboard',
-        search: value ? `?q=${encodeURIComponent(value)}` : '',
-      })
-    }
-  }
 
   function handleProfileClick() {
     setIsProfileMenuOpen(!isProfileMenuOpen)
@@ -51,9 +31,9 @@ function Header({ showSearch = true }) {
 
   return (
     <>
-      <header className="z-40 h-16 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" role="banner">
-      <div className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-3 px-2 text-primary-700 dark:text-primary-300 sm:px-4 lg:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <header className="z-40 h-[72px] border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" role="banner">
+      <div className="container mx-auto flex h-[72px] min-w-0 items-center gap-3 px-2 text-primary-700 dark:text-primary-300 sm:px-4 lg:px-6">
+        <div className="flex h-full min-w-0 flex-1 items-center gap-2">
           <button
             className="flex-shrink-0 rounded-lg p-2 hover:bg-primary-50 lg:hidden focus:outline-none focus:shadow-outline-green dark:hover:bg-gray-700"
             onClick={toggleSidebar}
@@ -61,44 +41,15 @@ function Header({ showSearch = true }) {
           >
             <MenuIcon className="w-5 h-5" aria-hidden="true" />
           </button>
-          <Link to="/app/dashboard" className="flex min-w-0 items-center gap-2" aria-label="DKUT Farm Management System home">
+          <Link to="/app/dashboard" className="flex h-full min-w-0 flex-1 items-center" aria-label="DKUT Farm Management System home">
             <img
               src={schoolLogo}
               alt="DKUT"
-              className="hidden h-9 w-24 max-w-full flex-shrink-0 object-contain ring-2 ring-primary-100 dark:ring-gray-600 md:block"
+              className="h-full w-full max-w-full object-contain"
             />
-            <span className="min-w-0 overflow-hidden truncate text-sm font-bold leading-tight tracking-wide text-gray-900 dark:text-gray-100 md:text-base">
-              <span className="md:hidden">DKUT Farm</span>
-              <span className="hidden md:inline">DKUT FARM MANAGEMENT SYSTEM</span>
-            </span>
           </Link>
         </div>
-        {showSearch && (
-          <div className="hidden min-w-0 flex-1 justify-center md:flex">
-            <div className="flex w-full max-w-xl items-center rounded-md border border-gray-200 bg-white px-2 focus-within:border-primary-500 dark:border-gray-600 dark:bg-gray-700">
-              <SearchIcon className="h-4 w-4 flex-shrink-0 text-gray-400" aria-hidden="true" />
-              <Input
-                className="min-w-0 flex-1 border-0 pl-2 text-gray-700 dark:text-gray-100"
-                placeholder="Search produce or jobs"
-                aria-label="Search"
-                value={searchQuery}
-                onChange={handleSearch}
-              />
-            </div>
-          </div>
-        )}
         <ul className="flex flex-shrink-0 items-center gap-2 sm:gap-4">
-          {showSearch && (
-            <li className="flex md:hidden">
-              <button
-                className="flex h-9 w-9 items-center justify-center rounded-md focus:outline-none focus:shadow-outline-primary"
-                onClick={() => history.push('/app/dashboard')}
-                aria-label="Search produce or jobs"
-              >
-                <SearchIcon className="h-5 w-5" aria-hidden="true" />
-              </button>
-            </li>
-          )}
           {/* <!-- Theme toggler --> */}
           <li className="flex">
             <button

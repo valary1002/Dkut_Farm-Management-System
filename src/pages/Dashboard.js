@@ -300,21 +300,21 @@ function CustomerDashboard() {
   return (
     <>
       <PageTitle>Farm Produce & Opportunities</PageTitle>
-      <figure className="relative mb-6 h-[220px] w-full overflow-hidden rounded-xl shadow-md sm:h-[260px] md:h-[300px]">
+      <figure className="relative mb-3 h-[120px] w-full overflow-hidden rounded-xl shadow-md sm:h-[150px] md:h-[clamp(140px,22vh,200px)]">
         <img
           src="/images/farm-hero.jpg"
           alt="Green farm field with rows of fresh crops"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-[center_70%]"
           loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/55 to-gray-900/10" />
-        <figcaption className="absolute inset-x-0 bottom-0 flex h-full items-end p-5 text-white sm:p-8">
+        <figcaption className="absolute inset-x-0 bottom-0 flex h-full items-end p-4 text-white sm:p-6">
           <div className="max-w-2xl">
-            <h2 className="text-2xl font-bold leading-tight sm:text-3xl">Welcome back, {user?.name || 'Customer'}.</h2>
+            <h2 className="text-xl font-bold leading-tight sm:text-2xl md:text-[1.75rem]">Welcome back, {user?.name || 'Customer'}.</h2>
           </div>
         </figcaption>
       </figure>
-      <div className="mb-8 flex items-center rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-600 dark:bg-gray-800">
+      <div className="mb-4 flex items-center rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-600 dark:bg-gray-800">
         <SearchIcon className="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
         <input
           type="search"
