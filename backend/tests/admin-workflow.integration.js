@@ -8,7 +8,7 @@ async function request(path, options = {}) {
 }
 
 async function main() {
-  const login = await request('/auth/login', { method: 'POST', body: { email: 'admin@example.com', password: 'ChangeMe123!' } })
+  const login = await request('/auth/login', { method: 'POST', body: { email: 'admin@example.com', password: 'Systemadmin123!' } })
   assert.equal(login.status, 200)
   const token = login.body.token
 

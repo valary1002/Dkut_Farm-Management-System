@@ -43,7 +43,7 @@ test('order creation reduces inventory inside a MongoDB transaction', () => {
 test('Mongo seed script contains the documented admin credential', () => {
   const seed = read('database/seed-mongo.js')
   assert.match(seed, /admin@example\.com/)
-  assert.match(seed, /ChangeMe123!/) 
+  assert.match(seed, /SEED_ADMIN_PASSWORD/)
 })
 
 test('Mongo connection config defines the required collections and indexes', () => {
@@ -56,6 +56,6 @@ test('Mongo connection config defines the required collections and indexes', () 
 
 test('seeded admin password helper remains available', async () => {
   const bcrypt = require('bcryptjs')
-  const hash = await bcrypt.hash('ChangeMe123!', 12)
-  assert.equal(await bcrypt.compare('ChangeMe123!', hash), true)
+  const hash = await bcrypt.hash('Systemadmin123!', 12)
+  assert.equal(await bcrypt.compare('Systemadmin123!', hash), true)
 })

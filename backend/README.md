@@ -24,7 +24,7 @@ The API listens on `http://localhost:5000` by default. The React frontend is int
 
 Customer purchases use cash on delivery. The order stores the delivery address and phone number, creates a pending cash-on-delivery payment record, and sends an order confirmation SMS through Africa's Talking when `AT_USERNAME`, `AT_API_KEY`, and optionally `AT_SENDER_ID` are configured in `.env`. If SMS settings are not configured, the order is still received and the API returns a clear notification message so it can be configured later.
 
-The Mongo seed script creates a development admin account (`admin@example.com` / `ChangeMe123!`), sample produce, inventory, and one open job. Change the admin password before sharing the database or deploying.
+The Mongo seed script creates an administrator from `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_ADMIN_FULL_NAME`, and `SEED_ADMIN_PHONE`, plus sample produce and jobs. Set these values before seeding a deployed database and keep the password out of source control.
 
 ## Roles
 

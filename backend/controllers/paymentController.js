@@ -32,11 +32,23 @@ async function create(req, res, next) {
     if (!order) return res.status(404).json({ message: 'Order not found' })
     if (req.user.role === 'CUSTOMER' && order.customerId.toString() !== req.user.userId) return res.status(403).json({ message: 'You cannot pay for this order' })
     if (paymentMethod === 'MPESA' && phoneNumber && !normalizePhone(phoneNumber).match(/^2547\d{8}$/)) return res.status(400).json({ message: 'A valid M-Pesa phone number is required' })
-    const result = await getDatabase().collection('payments').insertOne({ orderId, amount: Number(amount), paymentMethod, phoneNumber, status: 'PENDING', createdAt: new Date() })
+    const db = getDatabase()
+    const existingPayment = await db.collection('payments').findOne({ orderId })
+    let paymentId
+    if (existingPayment) {
+      paymentId = existingPayment._id
+      await db.collection('payments').updateOne(
+        { _id: paymentId },
+        { $set: { amount: Number(amount), paymentMethod, phoneNumber, status: 'PENDING', providerReference: null, failureReason: null, updatedAt: new Date() } }
+      )
+    } else {
+      const result = await db.collection('payments').insertOne({ orderId, amount: Number(amount), paymentMethod, phoneNumber, status: 'PENDING', createdAt: new Date() })
+      paymentId = result.insertedId
+    }
     let stk
-    try { stk = await requestStkPush({ amount, phone: phoneNumber, accountReference: orderId.toString() }) } catch (error) { await getDatabase().collection('payments').updateOne({ _id: result.insertedId }, { $set: { status: 'FAILED', failureReason: error.message } }); return res.status(502).json({ message: error.message }) }
-    await getDatabase().collection('payments').updateOne({ _id: result.insertedId }, { $set: { providerReference: stk.checkoutRequestId, stkPromptSent: stk.sent } })
-    res.status(201).json({ id: result.insertedId.toString(), status: 'PENDING', stkPromptSent: stk.sent, message: stk.message })
+    try { stk = await requestStkPush({ amount, phone: phoneNumber, accountReference: orderId.toString() }) } catch (error) { await db.collection('payments').updateOne({ _id: paymentId }, { $set: { status: 'FAILED', failureReason: error.message } }); return res.status(502).json({ message: error.message }) }
+    await db.collection('payments').updateOne({ _id: paymentId }, { $set: { providerReference: stk.checkoutRequestId, stkPromptSent: stk.sent } })
+    res.status(201).json({ id: paymentId.toString(), status: 'PENDING', stkPromptSent: stk.sent, message: stk.message })
   } catch (error) { next(error) }
 }
 async function confirm(req, res, next) {
@@ -53,7 +65,7 @@ async function confirm(req, res, next) {
     )
     await db.collection('orders').updateOne(
       { _id: orderId },
-      { $set: { status: order.status === 'PENDING' ? 'CONFIRMED' : order.status, updatedAt: new Date() } }
+      { $set: { status: 'CONFIRMED', paymentStatus: 'PAID', confirmedAt: new Date(), confirmedBy: toObjectId(req.user.userId), updatedAt: new Date() } }
     )
     res.json({ message: 'Payment confirmed', orderId: orderId.toString(), status: 'SUCCESS' })
   } catch (error) { next(error) }
@@ -76,7 +88,18 @@ async function callback(req, res) {
   const callback = req.body?.Body?.stkCallback
   if (callback?.CheckoutRequestID) {
     const resultCode = callback.ResultCode
-    await getDatabase().collection('payments').updateOne({ providerReference: callback.CheckoutRequestID }, { $set: { status: resultCode === 0 ? 'SUCCESS' : 'FAILED', providerResultCode: resultCode, providerResultDescription: callback.ResultDesc, ...(resultCode === 0 ? { paidAt: new Date() } : {}) } })
+    const db = getDatabase()
+    const payment = await db.collection('payments').findOneAndUpdate(
+      { providerReference: callback.CheckoutRequestID },
+      { $set: { status: resultCode === 0 ? 'SUCCESS' : 'FAILED', providerResultCode: resultCode, providerResultDescription: callback.ResultDesc, ...(resultCode === 0 ? { paidAt: new Date() } : {}) } },
+      { includeResultMetadata: false, returnDocument: 'after' }
+    )
+    if (resultCode === 0 && payment?.orderId) {
+      await db.collection('orders').updateOne(
+        { _id: payment.orderId },
+        { $set: { status: 'CONFIRMED', paymentStatus: 'PAID', confirmedAt: new Date(), updatedAt: new Date() } }
+      )
+    }
   }
   res.json({ ResultCode: 0, ResultDesc: 'Accepted' })
 }

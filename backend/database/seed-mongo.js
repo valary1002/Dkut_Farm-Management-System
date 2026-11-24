@@ -5,12 +5,19 @@ const { hashPassword } = require('../utils/password')
 async function seed() {
   await connectDatabase()
   const db = getDatabase()
+  const seedAdmin = {
+    email: String(process.env.SEED_ADMIN_EMAIL || 'admin@example.com').trim().toLowerCase(),
+    password: process.env.SEED_ADMIN_PASSWORD || 'Systemadmin123!',
+    fullName: String(process.env.SEED_ADMIN_FULL_NAME || 'System Admin').trim(),
+    phone: String(process.env.SEED_ADMIN_PHONE || '+254700000000').trim(),
+  }
+  if (seedAdmin.password.length < 8) throw new Error('SEED_ADMIN_PASSWORD must be at least 8 characters')
   for (const collectionName of ['users', 'produce', 'casual_jobs', 'job_applications', 'orders', 'payments', 'deliveries']) {
     try { await db.createCollection(collectionName) } catch (error) { if (error.codeName !== 'NamespaceExists') throw error }
   }
   const admin = await db.collection('users').findOneAndUpdate(
-    { email: 'admin@example.com' },
-    { $set: { fullName: 'System Admin', phone: '+254700000000', role: 'ADMIN', status: 'ACTIVE', updatedAt: new Date() }, $setOnInsert: { email: 'admin@example.com', passwordHash: await hashPassword('ChangeMe123!'), createdAt: new Date() } },
+    { email: seedAdmin.email },
+    { $set: { fullName: seedAdmin.fullName, phone: seedAdmin.phone, passwordHash: await hashPassword(seedAdmin.password), role: 'ADMIN', status: 'ACTIVE', updatedAt: new Date() }, $setOnInsert: { email: seedAdmin.email, createdAt: new Date() } },
     { upsert: true, returnDocument: 'after' }
   )
   const produce = [

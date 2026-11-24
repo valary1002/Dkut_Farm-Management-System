@@ -14,7 +14,7 @@ async function request(path, options = {}) {
 }
 
 async function main() {
-  const admin = await request('/auth/login', { method: 'POST', body: { email: 'admin@example.com', password: 'ChangeMe123!' } })
+  const admin = await request('/auth/login', { method: 'POST', body: { email: 'admin@example.com', password: 'Systemadmin123!' } })
   assert.equal(admin.status, 200)
 
   const email = `step14-${randomUUID()}@example.com`
