@@ -30,7 +30,11 @@ function Dashboard() {
   const [totalOrders, setTotalOrders] = useState(0)
 
   useEffect(() => {
-    if (user?.role !== 'Customer') apiRequest('/reports/dashboard').then(setMetrics).catch(() => {})
+    if (user?.role !== 'Customer') {
+      apiRequest('/reports/dashboard')
+        .then(setMetrics)
+        .catch((requestError) => console.error('Unable to load dashboard metrics:', requestError))
+    }
   }, [user])
 
   const ordersPerPage = 6
@@ -64,7 +68,7 @@ function Dashboard() {
         price: `KES ${item.sellingPrice}/${item.unit}`,
         status: item.quantityAvailable <= item.lowStockThreshold ? 'Low Stock' : 'In Stock',
       })))
-    }).catch(() => {})
+    }).catch((requestError) => console.error('Unable to load dashboard data:', requestError))
   }, [ordersPage, user])
 
   if (user?.role === 'Customer') return <CustomerDashboard />
@@ -226,19 +230,39 @@ function CustomerDashboard() {
   const { user } = useAuth()
   const [customerProduce, setCustomerProduce] = useState([])
   const [jobs, setJobs] = useState([])
+  const [produceLoading, setProduceLoading] = useState(true)
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [produceError, setProduceError] = useState('')
+  const [jobsError, setJobsError] = useState('')
   const searchQuery = new URLSearchParams(location.search).get('search') || ''
   const normalizedSearch = searchQuery.toLowerCase()
 
   useEffect(() => {
-    Promise.all([apiRequest('/produce'), apiRequest('/jobs')]).then(([produce, openJobs]) => {
-      setCustomerProduce(produce.map((item) => ({
-        ...item,
-        quantity: `${item.quantityAvailable} ${item.unit}`,
-        price: `KES ${item.sellingPrice}/${item.unit}`,
-        image: item.imageUrl || getProduceImage(item.name),
-      })))
-      setJobs(openJobs.slice(0, 3).map((job) => ({ ...job, wage: `KES ${job.dailyWage}/day` })))
-    }).catch(() => {})
+    Promise.allSettled([apiRequest('/produce'), apiRequest('/jobs')])
+      .then(([produceResult, jobsResult]) => {
+        if (produceResult.status === 'fulfilled') {
+          setCustomerProduce(produceResult.value.map((item) => ({
+            ...item,
+            quantity: `${item.quantityAvailable} ${item.unit}`,
+            price: `KES ${item.sellingPrice}/${item.unit}`,
+            image: item.imageUrl || getProduceImage(item.name),
+          })))
+        } else {
+          console.error('Unable to load produce:', produceResult.reason)
+          setProduceError(produceResult.reason.message || 'Unable to load produce.')
+        }
+
+        if (jobsResult.status === 'fulfilled') {
+          setJobs(jobsResult.value.slice(0, 3).map((job) => ({ ...job, wage: `KES ${job.dailyWage}/day` })))
+        } else {
+          console.error('Unable to load casual jobs:', jobsResult.reason)
+          setJobsError(jobsResult.reason.message || 'Unable to load casual jobs.')
+        }
+      })
+      .finally(() => {
+        setProduceLoading(false)
+        setJobsLoading(false)
+      })
   }, [])
 
   const filteredProduce = customerProduce.filter((item) => `${item.name} ${item.category}`.toLowerCase().includes(normalizedSearch))
@@ -251,9 +275,21 @@ function CustomerDashboard() {
       <p className="mb-2 text-gray-600 dark:text-gray-400">
         Happy shopping! Find fresh produce for your next meal.
       </p>
-      <p className="mb-8 text-gray-600 dark:text-gray-400">
+      <p className="mb-5 text-gray-600 dark:text-gray-400">
         You can also discover flexible farm jobs and apply in a few simple steps.
       </p>
+      <figure className="relative mb-6 h-40 w-full overflow-hidden rounded-xl shadow-md md:h-60">
+        <img
+          src="/images/farm-hero.jpg"
+          alt="Green farm field with rows of fresh crops"
+          className="h-full w-full object-cover"
+          loading="eager"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-gray-950/80 via-gray-900/25 to-transparent" />
+        <figcaption className="absolute bottom-4 left-4 right-4 text-lg font-semibold text-white sm:text-xl">
+          Fresh from the DKUT Farm
+        </figcaption>
+      </figure>
       <div className="flex items-center mb-8 border rounded-lg dark:border-gray-600">
         <SearchIcon className="w-5 h-5 ml-3 text-gray-400" aria-hidden="true" />
         <span className="px-3 text-sm text-gray-500 dark:text-gray-400">
@@ -262,10 +298,20 @@ function CustomerDashboard() {
       </div>
 
       <PageTitle>Available Farm Produce</PageTitle>
+      {produceLoading && <p className="mb-6 text-gray-600 dark:text-gray-400">Loading produce...</p>}
+      {produceError && <p className="mb-6 text-red-600 dark:text-red-400">{produceError}</p>}
+      {!produceLoading && !produceError && filteredProduce.length === 0 && (
+        <p className="mb-6 text-gray-600 dark:text-gray-400">No produce available yet.</p>
+      )}
       <div className="grid gap-6 mb-10 md:grid-cols-2 xl:grid-cols-3">
         {filteredProduce.slice(0, 2).map((item) => (
           <div key={item.name} className="overflow-hidden bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <img className="object-cover w-full h-44" src={item.image} alt={item.name} />
+            <img
+              className="object-cover w-full h-44"
+              src={item.image}
+              alt={item.name}
+              onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getProduceImage(item.name) }}
+            />
             <div className="p-5">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{item.name}</h3>
@@ -286,6 +332,11 @@ function CustomerDashboard() {
         <Link className="text-sm font-semibold text-green-600 hover:underline dark:text-green-400" to="/app/casual-jobs">View all jobs</Link>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
+        {jobsLoading && <p className="text-gray-600 dark:text-gray-400">Loading jobs...</p>}
+        {jobsError && <p className="text-red-600 dark:text-red-400">{jobsError}</p>}
+        {!jobsLoading && !jobsError && filteredJobs.length === 0 && (
+          <p className="text-gray-600 dark:text-gray-400">No casual jobs available yet.</p>
+        )}
         {filteredJobs.map((job) => (
           <div
             key={job.id || job.title}
