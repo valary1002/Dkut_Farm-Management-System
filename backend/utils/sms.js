@@ -6,7 +6,7 @@ function normalizePhone(phone) {
   return /^\+[1-9]\d{7,14}$/.test(value) ? value : null
 }
 
-async function sendOrderSms({ phoneNumber, orderId, totalAmount, deliveryAddress }) {
+async function sendOrderSms({ phoneNumber, orderId, totalAmount, deliveryAddress, messageOverride }) {
   const username = process.env.AT_USERNAME
   const apiKey = process.env.AT_API_KEY
   if (!username || !apiKey) {
@@ -15,7 +15,7 @@ async function sendOrderSms({ phoneNumber, orderId, totalAmount, deliveryAddress
   const recipient = normalizePhone(phoneNumber)
   if (!recipient) throw new Error('SMS recipient must be a valid international phone number')
 
-  const message = `DKUT Farm: Order #${orderId} received. Total KES ${totalAmount}. Delivery: ${deliveryAddress}. Payment is on delivery.`
+  const message = messageOverride || `DKUT Farm: Order #${orderId} received. Total KES ${totalAmount}. Delivery: ${deliveryAddress}. Payment is on delivery.`
   const form = new URLSearchParams({
     username,
     to: recipient,

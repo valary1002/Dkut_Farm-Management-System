@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   phone: { type: String, required: true },
   passwordHash: { type: String, required: true, select: false },
-  role: { type: String, enum: ['ADMIN', 'CUSTOMER'], default: 'CUSTOMER' },
+  role: { type: String, enum: ['ADMIN', 'STAFF', 'CUSTOMER'], default: 'CUSTOMER' },
   status: { type: String, enum: ['ACTIVE', 'DISABLED'], default: 'ACTIVE' },
 }, { ...timestamps, collection: 'users' })
 
@@ -53,7 +53,21 @@ applicationSchema.index({ jobId: 1, customerId: 1 }, { unique: true })
 const orderSchema = new mongoose.Schema({
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   totalAmount: { type: Number, required: true },
-  status: { type: String, enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'], default: 'PENDING' },
+  status: { type: String, enum: ['PENDING', 'CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'], default: 'PENDING' },
+  paymentStatus: { type: String, enum: ['PENDING', 'PAID', 'SUCCESS', 'FAILED', 'REFUND_PENDING', 'REFUNDED'], default: 'PENDING' },
+  statusHistory: [{
+    status: { type: String, enum: ['PENDING', 'CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] },
+    changedAt: { type: Date, default: Date.now },
+    changedBy: String,
+    note: String,
+  }],
+  problemReported: { type: Boolean, default: false },
+  problemNote: String,
+  problemReportedAt: Date,
+  confirmedAt: Date,
+  confirmedBy: mongoose.Schema.Types.ObjectId,
+  outForDeliveryAt: Date,
+  deliveredAt: Date,
   deliveryAddress: String,
   items: [{ produceId: mongoose.Schema.Types.ObjectId, produceName: String, unit: String, quantityKg: Number, unitPrice: Number, subtotal: Number }],
 }, { ...timestamps, collection: 'orders' })

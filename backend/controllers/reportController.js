@@ -8,7 +8,8 @@ async function dashboard(req, res, next) {
     const startWeek = new Date(startToday)
     startWeek.setDate(startToday.getDate() - startToday.getDay())
     const startMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const salesMatch = { status: 'CONFIRMED', paymentStatus: 'PAID' }
+    const paidStatuses = ['PAID', 'SUCCESS']
+    const salesMatch = { status: { $in: ['CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED'] }, paymentStatus: { $in: paidStatuses } }
     const [todaySales, weekSales, monthSales, recentRows] = await Promise.all([
       db.collection('orders').aggregate([{ $match: { ...salesMatch, confirmedAt: { $gte: startToday } } }, { $group: { _id: null, value: { $sum: '$totalAmount' } } }]).toArray(),
       db.collection('orders').aggregate([{ $match: { ...salesMatch, confirmedAt: { $gte: startWeek } } }, { $group: { _id: null, value: { $sum: '$totalAmount' } } }]).toArray(),
@@ -38,7 +39,7 @@ async function dashboard(req, res, next) {
 
 async function sales(req, res, next) {
   try {
-    const rows = await getDatabase().collection('orders').aggregate([{ $match: { status: 'CONFIRMED', paymentStatus: 'PAID' } }, { $unwind: '$items' }, { $lookup: { from: 'users', localField: 'customerId', foreignField: '_id', as: 'customerRecord' } }, { $project: { orderId: { $toString: '$_id' }, produceId: { $toString: '$items.produceId' }, produceName: '$items.produceName', quantitySold: '$items.quantityKg', unit: '$items.unit', unitPrice: '$items.unitPrice', totalAmount: '$items.subtotal', status: 1, paymentStatus: 1, createdAt: 1, customer: { $arrayElemAt: ['$customerRecord.fullName', 0] } } }, { $sort: { createdAt: -1 } }]).toArray()
+    const rows = await getDatabase().collection('orders').aggregate([{ $match: { status: { $in: ['CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED'] }, paymentStatus: { $in: ['PAID', 'SUCCESS'] } } }, { $unwind: '$items' }, { $lookup: { from: 'users', localField: 'customerId', foreignField: '_id', as: 'customerRecord' } }, { $project: { orderId: { $toString: '$_id' }, produceId: { $toString: '$items.produceId' }, produceName: '$items.produceName', quantitySold: '$items.quantityKg', unit: '$items.unit', unitPrice: '$items.unitPrice', totalAmount: '$items.subtotal', status: 1, paymentStatus: 1, createdAt: 1, customer: { $arrayElemAt: ['$customerRecord.fullName', 0] } } }, { $sort: { createdAt: -1 } }]).toArray()
     res.json(rows)
   } catch (error) { next(error) }
 }

@@ -15,6 +15,8 @@ const deliveryRoutes = require('./routes/deliveryRoutes')
 const reportRoutes = require('./routes/reportRoutes')
 const smsRoutes = require('./routes/smsRoutes')
 const cartRoutes = require('./routes/cartRoutes')
+const cron = require('node-cron')
+const { runOrderMaintenance } = require('./utils/orderMaintenance')
 const { notFound, errorHandler } = require('./middleware/errorMiddleware')
 const { connectDatabase } = require('./config/database')
 const { validateEnvironment } = require('./config/environment')
@@ -59,6 +61,19 @@ app.use('/api/reports', reportRoutes)
 app.use('/api/sms', smsRoutes)
 app.use('/api/cart', cartRoutes)
 
+app.post('/api/jobs/run-order-maintenance', async (req, res) => {
+  if (!process.env.ORDER_MAINTENANCE_SECRET || req.headers['x-maintenance-secret'] !== process.env.ORDER_MAINTENANCE_SECRET) {
+    return res.status(401).json({ message: 'Unauthorized maintenance request' })
+  }
+  try {
+    const result = await runOrderMaintenance()
+    res.json({ message: 'Order maintenance completed', ...result })
+  } catch (error) {
+    console.error('Order maintenance endpoint failed:', error)
+    res.status(500).json({ message: 'Order maintenance failed' })
+  }
+})
+
 app.use(notFound)
 app.use(errorHandler)
 
@@ -67,6 +82,14 @@ const port = Number(process.env.PORT || 5000)
 async function start() {
 	validateEnvironment()
 	await connectDatabase()
+	try {
+		await runOrderMaintenance()
+		cron.schedule('*/20 * * * *', () => {
+			runOrderMaintenance().catch((error) => console.error('Scheduled order maintenance failed:', error))
+		})
+	} catch (error) {
+		console.error('Initial order maintenance failed:', error)
+	}
 	app.listen(port, () => console.log(`DKUT Farm API listening on port ${port}`))
 }
 

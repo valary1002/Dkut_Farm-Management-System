@@ -1,5 +1,6 @@
 const { getDatabase } = require('../config/database')
 const { toObjectId, withIds } = require('../utils/mongo')
+const { transitionOrder } = require('../utils/orderState')
 
 function normalizePhone(phone) {
   const value = String(phone || '').replace(/\s+/g, '')
@@ -65,8 +66,9 @@ async function confirm(req, res, next) {
     )
     await db.collection('orders').updateOne(
       { _id: orderId },
-      { $set: { status: 'CONFIRMED', paymentStatus: 'PAID', confirmedAt: new Date(), confirmedBy: toObjectId(req.user.userId), updatedAt: new Date() } }
+      { $set: { paymentStatus: 'PAID', confirmedAt: new Date(), confirmedBy: toObjectId(req.user.userId), updatedAt: new Date() } }
     )
+    await transitionOrder(orderId, 'CONFIRMED', { changedBy: `customer:${req.user.userId}`, note: 'Payment confirmed' })
     res.json({ message: 'Payment confirmed', orderId: orderId.toString(), status: 'SUCCESS' })
   } catch (error) { next(error) }
 }
@@ -97,7 +99,13 @@ async function callback(req, res) {
     if (resultCode === 0 && payment?.orderId) {
       await db.collection('orders').updateOne(
         { _id: payment.orderId },
-        { $set: { status: 'CONFIRMED', paymentStatus: 'PAID', confirmedAt: new Date(), updatedAt: new Date() } }
+        { $set: { paymentStatus: 'PAID', confirmedAt: new Date(), updatedAt: new Date() } }
+      )
+      await transitionOrder(payment.orderId, 'CONFIRMED', { changedBy: 'system', note: 'M-Pesa payment confirmed by callback' })
+    } else if (resultCode !== 0 && payment?.orderId) {
+      await db.collection('orders').updateOne(
+        { _id: payment.orderId },
+        { $set: { paymentStatus: 'FAILED', updatedAt: new Date() } }
       )
     }
   }
