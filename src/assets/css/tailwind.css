@@ -24,6 +24,73 @@
 }
 
 @layer components {
+	:root {
+		--bottom-nav-bg: rgba(255, 255, 255, 0.96);
+		--bottom-nav-border: #d1d5db;
+		--bottom-nav-label: #4b5563;
+		--bottom-nav-active: #15803d;
+		--bottom-nav-active-bg: #dcfce7;
+	}
+
+	html.dark {
+		--bottom-nav-bg: rgba(31, 41, 55, 0.96);
+		--bottom-nav-border: #4b5563;
+		--bottom-nav-label: #d1d5db;
+		--bottom-nav-active: #86efac;
+		--bottom-nav-active-bg: #374151;
+	}
+
+	.bottom-nav {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 30;
+		padding: 0.5rem;
+		box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.12);
+		background: var(--bottom-nav-bg);
+		border-top: 1px solid var(--bottom-nav-border);
+		backdrop-filter: blur(8px);
+	}
+
+	@media (min-width: 1024px) {
+		.bottom-nav {
+			display: none;
+		}
+	}
+
+	.bottom-nav-item {
+		display: flex;
+		min-height: 3rem;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0.5rem;
+		padding: 0 0.25rem;
+		font-size: 10px;
+		font-weight: 600;
+		transition: color 150ms ease, background-color 150ms ease;
+		color: var(--bottom-nav-label);
+	}
+
+	.bottom-nav-item:hover,
+	.bottom-nav-item:active {
+		background: var(--bottom-nav-active-bg);
+		color: var(--bottom-nav-active);
+	}
+
+	.bottom-nav-item-active {
+		background: var(--bottom-nav-active-bg);
+		color: var(--bottom-nav-active);
+		box-shadow: inset 0 2px 0 var(--bottom-nav-active);
+	}
+
+	.bottom-nav-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		margin-bottom: 0.25rem;
+	}
+
 	.dkut-panel {
 		@apply border border-gray-200 bg-white shadow-sm;
 		border-radius: 0.875rem;

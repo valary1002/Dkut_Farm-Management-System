@@ -134,7 +134,10 @@ function CustomerProduce() {
         sellingPrice: Number(item.sellingPrice),
         image: item.imageUrl || getProduceImage(item.name),
       }))))
-      .catch((requestError) => setError(requestError.message))
+      .catch((requestError) => {
+        console.error('Unable to load produce:', requestError)
+        setError(requestError.message)
+      })
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -147,12 +150,17 @@ function CustomerProduce() {
       {isLoading && <p className="mb-6 text-gray-600 dark:text-gray-400">Loading produce...</p>}
       {error && <p className="mb-6 text-red-600 dark:text-red-400">{error}</p>}
       {!isLoading && !error && customerProduce.length === 0 && (
-        <p className="mb-6 text-gray-600 dark:text-gray-400">No produce is currently available.</p>
+        <p className="mb-6 text-gray-600 dark:text-gray-400">No produce available yet.</p>
       )}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {customerProduce.map((item) => (
           <div key={item.id} className="overflow-hidden bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <img className="object-cover w-full h-48" src={item.image} alt={item.name} />
+            <img
+              className="object-cover w-full h-48"
+              src={item.image}
+              alt={item.name}
+              onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getProduceImage(item.name) }}
+            />
             <div className="p-5">
               <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-gray-100">{item.name}</h2>
               <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">{item.category}</p>
@@ -200,7 +208,10 @@ function AdminProduce() {
       sellingPrice: Number(item.sellingPrice),
       status: item.status === 'ACTIVE' ? 'In Stock' : 'Out of Stock',
       harvestDate: item.createdAt,
-    })))).catch((requestError) => setLoadError(requestError.message))
+    })))).catch((requestError) => {
+      console.error('Unable to load produce:', requestError)
+      setLoadError(requestError.message)
+    })
   }, [])
 
   const itemsPerPage = 8

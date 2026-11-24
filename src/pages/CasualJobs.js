@@ -141,6 +141,7 @@ function CasualJobs() {
 function ApplicantJobs() {
   const history = useHistory()
   const [openJobs, setOpenJobs] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [appliedJobIds, setAppliedJobIds] = useState([])
 
@@ -156,14 +157,22 @@ function ApplicantJobs() {
         })))
         setAppliedJobIds(applications.map((application) => application.jobId))
       })
-      .catch((requestError) => setError(requestError.message))
+      .catch((requestError) => {
+        console.error('Unable to load casual jobs:', requestError)
+        setError(requestError.message)
+      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   return (
     <>
       <PageTitle>Available Casual Jobs</PageTitle>
       <p className="mb-8 text-gray-600 dark:text-gray-400">Review open farm opportunities and apply for work.</p>
+      {isLoading && <p className="mb-6 text-gray-600 dark:text-gray-400">Loading jobs...</p>}
       {error && <p className="mb-6 text-red-600 dark:text-red-400">{error}</p>}
+      {!isLoading && !error && openJobs.length === 0 && (
+        <p className="mb-6 text-gray-600 dark:text-gray-400">No casual jobs available yet.</p>
+      )}
       <div className="grid gap-6 md:grid-cols-2">
         {openJobs.map((job) => (
           <div key={job.id} className="p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
@@ -216,7 +225,10 @@ function AdminCasualJobs() {
       deadline: job.deadline,
       status: job.status === 'OPEN' ? 'Open' : job.status === 'CLOSED' ? 'Closed' : 'Draft',
       applicants: 0,
-    })))).catch((requestError) => setLoadError(requestError.message))
+    })))).catch((requestError) => {
+      console.error('Unable to load casual jobs:', requestError)
+      setLoadError(requestError.message)
+    })
   }, [])
 
   const ITEMS_PER_PAGE = 8

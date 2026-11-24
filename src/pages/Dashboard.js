@@ -234,8 +234,18 @@ function CustomerDashboard() {
   const [jobsLoading, setJobsLoading] = useState(true)
   const [produceError, setProduceError] = useState('')
   const [jobsError, setJobsError] = useState('')
-  const searchQuery = new URLSearchParams(location.search).get('search') || ''
-  const normalizedSearch = searchQuery.toLowerCase()
+  const searchQuery = new URLSearchParams(location.search).get('q') || ''
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+  const [isSearching, setIsSearching] = useState(false)
+
+  useEffect(() => {
+    setIsSearching(true)
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim())
+      setIsSearching(false)
+    }, 300)
+    return () => window.clearTimeout(timeout)
+  }, [searchQuery])
 
   useEffect(() => {
     Promise.allSettled([apiRequest('/produce'), apiRequest('/jobs')])
@@ -265,37 +275,65 @@ function CustomerDashboard() {
       })
   }, [])
 
-  const filteredProduce = customerProduce.filter((item) => `${item.name} ${item.category}`.toLowerCase().includes(normalizedSearch))
-  const filteredJobs = jobs.filter((job) => `${job.title} ${job.activity} ${job.description}`.toLowerCase().includes(normalizedSearch))
+  const normalizedSearch = debouncedSearch.toLowerCase()
+  const filteredProduce = customerProduce.filter((item) =>
+    `${item.name || ''} ${item.category || ''}`.toLowerCase().includes(normalizedSearch)
+  )
+  const filteredJobs = jobs.filter((job) =>
+    `${job.title || ''} ${job.activity || ''} ${job.description || ''} ${job.location || ''}`.toLowerCase().includes(normalizedSearch)
+  )
+
+  function updateSearch(value) {
+    const params = new URLSearchParams(location.search)
+    if (value) params.set('q', value)
+    else params.delete('q')
+    history.replace({
+      pathname: location.pathname,
+      search: params.toString() ? `?${params.toString()}` : '',
+    })
+  }
+
+  function clearSearch() {
+    updateSearch('')
+  }
 
   return (
     <>
       <PageTitle>Farm Produce & Opportunities</PageTitle>
-      <p className="mb-2 text-gray-600 dark:text-gray-400">Welcome back, {user?.name || 'Customer'}.</p>
-      <p className="mb-2 text-gray-600 dark:text-gray-400">
-        Happy shopping! Find fresh produce for your next meal.
-      </p>
-      <p className="mb-5 text-gray-600 dark:text-gray-400">
-        You can also discover flexible farm jobs and apply in a few simple steps.
-      </p>
-      <figure className="relative mb-6 h-40 w-full overflow-hidden rounded-xl shadow-md md:h-60">
+      <figure className="relative mb-6 h-[220px] w-full overflow-hidden rounded-xl shadow-md sm:h-[260px] md:h-[300px]">
         <img
           src="/images/farm-hero.jpg"
           alt="Green farm field with rows of fresh crops"
           className="h-full w-full object-cover"
           loading="eager"
         />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-gray-950/80 via-gray-900/25 to-transparent" />
-        <figcaption className="absolute bottom-4 left-4 right-4 text-lg font-semibold text-white sm:text-xl">
-          Fresh from the DKUT Farm
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-gray-900/55 to-gray-900/10" />
+        <figcaption className="absolute inset-x-0 bottom-0 flex h-full items-end p-5 text-white sm:p-8">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl font-bold leading-tight sm:text-3xl">Welcome back, {user?.name || 'Customer'}.</h2>
+            <p className="mt-3 text-sm font-medium sm:text-base">Happy shopping! Find fresh produce for your next meal.</p>
+            <p className="mt-1 text-sm text-gray-100 sm:text-base">You can also discover flexible farm jobs and apply in a few simple steps.</p>
+          </div>
         </figcaption>
       </figure>
-      <div className="flex items-center mb-8 border rounded-lg dark:border-gray-600">
-        <SearchIcon className="w-5 h-5 ml-3 text-gray-400" aria-hidden="true" />
-        <span className="px-3 text-sm text-gray-500 dark:text-gray-400">
-          {searchQuery ? `Showing results for "${searchQuery}"` : 'Use the search bar above to filter produce and jobs.'}
-        </span>
+      <div className="mb-8 flex items-center rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-600 dark:bg-gray-800">
+        <SearchIcon className="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(event) => updateSearch(event.target.value)}
+          placeholder="Search produce or jobs"
+          className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-800 outline-none dark:text-gray-100"
+          aria-label="Search produce or jobs"
+        />
+        {searchQuery && (
+          <button type="button" onClick={clearSearch} className="rounded-md px-2 py-1 text-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Clear search">×</button>
+        )}
       </div>
+      {isSearching && <p className="mb-4 text-sm text-gray-500" role="status">Searching produce and jobs...</p>}
+      {!isSearching && debouncedSearch && filteredProduce.length === 0 && filteredJobs.length === 0 && (
+        <p className="mb-6 text-sm text-red-600 dark:text-red-400">No produce or jobs found for "{debouncedSearch}"</p>
+      )}
 
       <PageTitle>Available Farm Produce</PageTitle>
       {produceLoading && <p className="mb-6 text-gray-600 dark:text-gray-400">Loading produce...</p>}

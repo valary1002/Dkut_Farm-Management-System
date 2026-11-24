@@ -83,7 +83,7 @@ const routes = [
   },
   {
     path: '/orders',
-    roles: ['Administrator'],
+    roles: ['Administrator', 'Customer'],
     component: Orders,
   },
   {

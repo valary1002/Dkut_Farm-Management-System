@@ -16,7 +16,12 @@ function JobApplicationForm() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    if (!job) apiRequest('/jobs').then((jobs) => setJob(jobs.find((item) => item.id === jobId))).catch((requestError) => setError(requestError.message))
+    if (!job) apiRequest('/jobs')
+      .then((jobs) => setJob(jobs.find((item) => item.id === jobId)))
+      .catch((requestError) => {
+        console.error('Unable to load the selected casual job:', requestError)
+        setError(requestError.message)
+      })
   }, [job, jobId])
 
   const updateField = (event) => setForm({ ...form, [event.target.name]: event.target.value })

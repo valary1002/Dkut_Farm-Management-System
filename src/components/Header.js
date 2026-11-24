@@ -26,7 +26,7 @@ function Header({ showSearch = true }) {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    setSearchQuery(params.get('search') || '')
+    setSearchQuery(params.get('q') || '')
   }, [location.search])
 
   function handleSearch(event) {
@@ -35,7 +35,7 @@ function Header({ showSearch = true }) {
     if (location.pathname === '/app/dashboard') {
       history.replace({
         pathname: '/app/dashboard',
-        search: value ? `?search=${encodeURIComponent(value)}` : '',
+        search: value ? `?q=${encodeURIComponent(value)}` : '',
       })
     }
   }
@@ -51,30 +51,34 @@ function Header({ showSearch = true }) {
 
   return (
     <>
-      <header className="z-40 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" role="banner">
-      <div className="container flex min-h-16 items-center gap-4 px-4 py-3 mx-auto text-primary-700 dark:text-primary-300 sm:px-6">
-        <button
-          className="rounded-lg p-2 hover:bg-primary-50 lg:hidden focus:outline-none focus:shadow-outline-green dark:hover:bg-gray-700"
-          onClick={toggleSidebar}
-          aria-label="Menu"
-        >
-          <MenuIcon className="w-6 h-6" aria-hidden="true" />
-        </button>
-        <Link to="/app/dashboard" className="flex items-center gap-2 sm:gap-3" aria-label="DKUT Farm Management System home">
-          <img src={schoolLogo} alt="DKUT Farm Management System" className="h-9 w-9 rounded-xl object-cover ring-2 ring-primary-100 dark:ring-gray-600" />
-          <span className="hidden sm:block">
-            <span className="block text-sm font-bold leading-tight tracking-wide text-gray-900 dark:text-gray-100">DKUT FARM</span>
-            <span className="block text-[10px] font-semibold uppercase tracking-widest text-primary-700 dark:text-primary-300">Management System</span>
-          </span>
-        </Link>
+      <header className="z-40 h-16 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" role="banner">
+      <div className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-3 px-2 text-primary-700 dark:text-primary-300 sm:px-4 lg:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <button
+            className="flex-shrink-0 rounded-lg p-2 hover:bg-primary-50 lg:hidden focus:outline-none focus:shadow-outline-green dark:hover:bg-gray-700"
+            onClick={toggleSidebar}
+            aria-label="Menu"
+          >
+            <MenuIcon className="w-5 h-5" aria-hidden="true" />
+          </button>
+          <Link to="/app/dashboard" className="flex min-w-0 items-center gap-2" aria-label="DKUT Farm Management System home">
+            <img
+              src={schoolLogo}
+              alt="DKUT"
+              className="hidden h-9 w-24 max-w-full flex-shrink-0 object-contain ring-2 ring-primary-100 dark:ring-gray-600 md:block"
+            />
+            <span className="min-w-0 overflow-hidden truncate text-sm font-bold leading-tight tracking-wide text-gray-900 dark:text-gray-100 md:text-base">
+              <span className="md:hidden">DKUT Farm</span>
+              <span className="hidden md:inline">DKUT FARM MANAGEMENT SYSTEM</span>
+            </span>
+          </Link>
+        </div>
         {showSearch && (
-          <div className="flex flex-1 justify-center">
-            <div className="relative w-full max-w-xl focus-within:text-primary-600">
-              <div className="absolute inset-y-0 flex items-center pl-2">
-                <SearchIcon className="w-4 h-4" aria-hidden="true" />
-              </div>
+          <div className="hidden min-w-0 flex-1 justify-center md:flex">
+            <div className="flex w-full max-w-xl items-center rounded-md border border-gray-200 bg-white px-2 focus-within:border-primary-500 dark:border-gray-600 dark:bg-gray-700">
+              <SearchIcon className="h-4 w-4 flex-shrink-0 text-gray-400" aria-hidden="true" />
               <Input
-                className="pl-8 text-gray-700"
+                className="min-w-0 flex-1 border-0 pl-2 text-gray-700 dark:text-gray-100"
                 placeholder="Search produce or jobs"
                 aria-label="Search"
                 value={searchQuery}
@@ -83,7 +87,18 @@ function Header({ showSearch = true }) {
             </div>
           </div>
         )}
-        <ul className="flex items-center flex-shrink-0 space-x-3 sm:space-x-5">
+        <ul className="flex flex-shrink-0 items-center gap-2 sm:gap-4">
+          {showSearch && (
+            <li className="flex md:hidden">
+              <button
+                className="flex h-9 w-9 items-center justify-center rounded-md focus:outline-none focus:shadow-outline-primary"
+                onClick={() => history.push('/app/dashboard')}
+                aria-label="Search produce or jobs"
+              >
+                <SearchIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </li>
+          )}
           {/* <!-- Theme toggler --> */}
           <li className="flex">
             <button
