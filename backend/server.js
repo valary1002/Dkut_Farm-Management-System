@@ -18,17 +18,24 @@ const { connectDatabase } = require('./config/database')
 const { validateEnvironment } = require('./config/environment')
 
 const app = express()
-const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000')
-	.split(',')
-	.map((origin) => origin.trim())
-	.filter(Boolean)
-app.use(helmet())
+const allowedOrigins = [
+  "https://dkutfarmmanagement-git-main-vcc21.vercel.app",
+  "http://localhost:3000"
+];
+
+app.use(helmet());
+
 app.use(cors({
-	origin(origin, callback) {
-		if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
-		return callback(new Error('Origin is not allowed by CORS'))
-	},
-}))
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Origin is not allowed by CORS"));
+  },
+  credentials: true
+}));
+
 app.use(express.json({ limit: '1mb' }))
 
 app.get('/api/health', async (req, res, next) => {
