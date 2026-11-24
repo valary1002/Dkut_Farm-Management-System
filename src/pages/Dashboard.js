@@ -311,8 +311,6 @@ function CustomerDashboard() {
         <figcaption className="absolute inset-x-0 bottom-0 flex h-full items-end p-5 text-white sm:p-8">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-bold leading-tight sm:text-3xl">Welcome back, {user?.name || 'Customer'}.</h2>
-            <p className="mt-3 text-sm font-medium sm:text-base">Happy shopping! Find fresh produce for your next meal.</p>
-            <p className="mt-1 text-sm text-gray-100 sm:text-base">You can also discover flexible farm jobs and apply in a few simple steps.</p>
           </div>
         </figcaption>
       </figure>
