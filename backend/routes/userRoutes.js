@@ -13,8 +13,14 @@ router.get('/me', authenticate, async (req, res, next) => {
 })
 router.patch('/me', authenticate, async (req, res, next) => {
   try {
-    const { fullName, phone } = req.body
-    await getDatabase().collection('users').updateOne({ _id: toObjectId(req.user.userId) }, { $set: { ...(fullName === undefined ? {} : { fullName }), ...(phone === undefined ? {} : { phone }), updatedAt: new Date() } })
+    const { fullName, email, phone } = req.body
+    if (email !== undefined) {
+      const normalizedEmail = String(email).trim().toLowerCase()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return res.status(400).json({ message: 'A valid email address is required' })
+      const existing = await getDatabase().collection('users').findOne({ email: normalizedEmail, _id: { $ne: toObjectId(req.user.userId) } })
+      if (existing) return res.status(409).json({ message: 'Email is already registered' })
+    }
+    await getDatabase().collection('users').updateOne({ _id: toObjectId(req.user.userId) }, { $set: { ...(fullName === undefined ? {} : { fullName }), ...(email === undefined ? {} : { email: String(email).trim().toLowerCase() }), ...(phone === undefined ? {} : { phone }), updatedAt: new Date() } })
     res.json({ message: 'Profile updated' })
   } catch (error) { next(error) }
 })
