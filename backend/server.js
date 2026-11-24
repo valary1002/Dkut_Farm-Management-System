@@ -20,34 +20,29 @@ const { validateEnvironment } = require('./config/environment')
 const app = express()
 const allowedOrigins = [
   "https://dkutfarmmanagement-git-main-vcc21.vercel.app",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "http://localhost:5173",
 ];
 
-app.use(helmet());
-
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error("Origin is not allowed by CORS"));
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS: " + origin));
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-app.use(express.json({ limit: '1mb' }))
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
-app.get('/api/health', async (req, res, next) => {
-	try {
-		const { getDatabase } = require('./config/database')
-		await getDatabase().command({ ping: 1 })
-		res.json({ status: 'ok', database: 'connected' })
-	} catch (error) {
-		error.statusCode = 503
-		next(error)
-	}
-})
+app.use(helmet());
+app.use(express.json({ limit: "1mb" }));
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/produce', produceRoutes)
